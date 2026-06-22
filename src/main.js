@@ -1,16 +1,19 @@
-import {render} from './render.js';
-import FilterView from './view/filter-view.js';
+import { render } from './render.js';
+import EventModel from './model/event-model.js';
 import BoardPresenter from './presenter/board-presenter.js';
+import FilterView from './view/filter-view.js';
 
 const siteHeaderElement = document.querySelector('.trip-main');
 const filtersContainer = siteHeaderElement.querySelector('.trip-controls__filters');
 const siteMainElement = document.querySelector('.trip-events');
 
+render(new FilterView(), filtersContainer);
+
+const eventModel = new EventModel();
+eventModel.init();
 
 const boardPresenter = new BoardPresenter({
   boardContainer: siteMainElement,
+  eventModel: eventModel
 });
-
-render(new FilterView(), filtersContainer);
-
 boardPresenter.init();
