@@ -1,5 +1,4 @@
-//import { render, replace, RenderPosition } from '../framework/render.js';
-import { render } from '../render.js';
+import { render} from '../framework/render.js';
 import { getDefaultEvent } from '../const.js';
 import EventEditView from '../view/event-edit-view.js';
 import EventItemView from '../view/event-item-view.js';
@@ -20,11 +19,11 @@ export default class BoardPresenter {
 
     render(new SortView(), this.boardContainer);
     render(this.eventListComponent, this.boardContainer);
-    render(new EventEditView(getDefaultEvent(), destinations, offers), this.eventListComponent.getElement());
-    render(new EventEditView(events[2], destinations, offers), this.eventListComponent.getElement());
+    render(new EventEditView(getDefaultEvent(), destinations, offers), this.eventListComponent.element);
+    render(new EventEditView(events[2], destinations, offers), this.eventListComponent.element);
 
     for (const event of events) {
-      render(new EventItemView(event, destinations, offers), this.eventListComponent.getElement());
+      render(new EventItemView(event, destinations, offers), this.eventListComponent.element);
     }
   }
 }
