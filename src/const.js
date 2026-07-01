@@ -20,3 +20,11 @@ export const getDefaultEvent = () => ({
   offers: [],
   type: EVENT_TYPES[0],
 });
+
+
+export const FilterType = {
+  EVERYTHING: 'everything',
+  FUTURE: 'future',
+  PRESENT: 'present',
+  PAST: 'past',
+};

@@ -1,6 +1,6 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import { EVENT_TYPES } from '../const.js';
-import { humanizeDate } from '../utils.js';
+import { humanizeDate } from '../utils/date.js';
 
 const upFirstLetter = (word) => `${word[0].toUpperCase()}${word.slice(1)}`;
 const formatOfferTitle = (title) => title.split(' ').join('_');

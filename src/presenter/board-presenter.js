@@ -3,12 +3,12 @@ import EventEditView from '../view/event-edit-view.js';
 import EventItemView from '../view/event-item-view.js';
 import EventListView from '../view/event-list-view.js';
 import SortView from '../view/sort-view.js';
+import NoEventView from '../view/no-event-view.js';
 
 export default class BoardPresenter {
   #boardContainer = null;
   #eventModel = null;
   #eventListComponent = new EventListView();
-
   #eventPresenterMap = new Map();
 
   constructor({ boardContainer, eventModel }) {
@@ -21,6 +21,11 @@ export default class BoardPresenter {
     const destinations = this.#eventModel.destinations;
     const offers = this.#eventModel.offers;
 
+    if (events.length === 0) {
+      render(new NoEventView(), this.#boardContainer);
+      return;
+    }
+
     render(new SortView(), this.#boardContainer);
     render(this.#eventListComponent, this.#boardContainer);
 
@@ -29,22 +34,19 @@ export default class BoardPresenter {
     }
   }
 
-  #resetAllEventsView = () => {
+  #resetAllEventsView() {
     this.#eventPresenterMap.forEach((replaceFormToCard) => replaceFormToCard());
-  };
+  }
 
   #renderEvent(event, destinations, offers) {
     let eventComponent = null;
     let eventEditComponent = null;
-
     let isEditMode = false;
 
     const replaceCardToForm = () => {
       this.#resetAllEventsView();
-
       replace(eventEditComponent, eventComponent);
       document.addEventListener('keydown', escKeyDownHandler);
-
       isEditMode = true;
     };
 
@@ -63,28 +65,18 @@ export default class BoardPresenter {
       }
     }
 
-    eventComponent = new EventItemView(
-      event,
-      destinations,
-      offers,
-      () => {
-        replaceCardToForm();
-      }
-    );
+    eventComponent = new EventItemView(event, destinations, offers, () => {
+      replaceCardToForm();
+    });
 
-    eventEditComponent = new EventEditView(
-      event,
-      destinations,
-      offers,
-      {
-        onFormSubmit: () => {
-          replaceFormToCard();
-        },
-        onRollupClick: () => {
-          replaceFormToCard();
-        }
+    eventEditComponent = new EventEditView(event, destinations, offers, {
+      onFormSubmit: () => {
+        replaceFormToCard();
+      },
+      onRollupClick: () => {
+        replaceFormToCard();
       }
-    );
+    });
 
     const eventKey = event.id || event;
     this.#eventPresenterMap.set(eventKey, replaceFormToCard);
