@@ -2,6 +2,7 @@ import { render, replace, remove } from '../framework/render.js';
 import EventItemView from '../view/event-item-view.js';
 import EventEditView from '../view/event-edit-view.js';
 import { UserAction, UpdateType } from '../const.js';
+import { isEscapeKey } from '../utils/common.js';
 
 export default class EventPresenter {
   #eventListContainer = null;
@@ -45,7 +46,7 @@ export default class EventPresenter {
         event: this.#event,
         onFormSubmit: this.#handleFormSubmit,
         onRollupClick: this.#handleFormRollupClick,
-        onDeleteClick: this.#handleDeleteClickHandler
+        onDeleteClick: this.#handleDeleteClick
       }
     );
 
@@ -67,6 +68,7 @@ export default class EventPresenter {
   destroy() {
     remove(this.#eventComponent);
     remove(this.#eventEditComponent);
+    document.removeEventListener('keydown', this.#documentKeydownHandler);
   }
 
   resetView() {
@@ -76,21 +78,56 @@ export default class EventPresenter {
     }
   }
 
+  setSaving() {
+    if (this.#isEditMode) {
+      this.#eventEditComponent.updateElement({
+        isDisabled: true,
+        isSaving: true,
+      });
+    } else {
+      this.#eventComponent.setDisabled(true);
+    }
+  }
+
+  setDeleting() {
+    if (this.#isEditMode) {
+      this.#eventEditComponent.updateElement({
+        isDisabled: true,
+        isDeleting: true,
+      });
+    }
+  }
+
+  setAborting() {
+    if (!this.#isEditMode) {
+      this.#eventComponent.shake();
+      return;
+    }
+
+    this.#eventEditComponent.shake(() => {
+      this.#eventEditComponent.updateElement({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false,
+      });
+    });
+  }
+
   #replaceCardToForm = () => {
     this.#handleModeChange();
     replace(this.#eventEditComponent, this.#eventComponent);
-    document.addEventListener('keydown', this.#escKeyDownHandler);
+    document.addEventListener('keydown', this.#documentKeydownHandler);
     this.#isEditMode = true;
   };
 
   #replaceFormToCard = () => {
     replace(this.#eventComponent, this.#eventEditComponent);
-    document.removeEventListener('keydown', this.#escKeyDownHandler);
+    document.removeEventListener('keydown', this.#documentKeydownHandler);
     this.#isEditMode = false;
   };
 
-  #escKeyDownHandler = (evt) => {
-    if (evt.key === 'Escape' || evt.key === 'Esc') {
+  #documentKeydownHandler = (evt) => {
+    if (isEscapeKey(evt)) {
       evt.preventDefault();
       this.#eventEditComponent.reset(this.#event);
       this.#replaceFormToCard();
@@ -122,46 +159,11 @@ export default class EventPresenter {
     this.#replaceFormToCard();
   };
 
-  #handleDeleteClickHandler = (deletedEvent) => {
+  #handleDeleteClick = (deletedEvent) => {
     this.#handleDataChange(
       UserAction.DELETE_EVENT,
       UpdateType.MINOR,
       deletedEvent
     );
   };
-
-  setSaving() {
-    if (this.#isEditMode) {
-      this.#eventEditComponent.updateElement({
-        isDisabled: true,
-        isSaving: true,
-      });
-    }
-  }
-
-  setDeleting() {
-    if (this.#isEditMode) {
-      this.#eventEditComponent.updateElement({
-        isDisabled: true,
-        isDeleting: true,
-      });
-    }
-  }
-
-  setAborting() {
-    if (!this.#isEditMode) {
-      this.#eventComponent.shake();
-      return;
-    }
-
-    const resetFormState = () => {
-      this.#eventEditComponent.updateElement({
-        isDisabled: false,
-        isSaving: false,
-        isDeleting: false,
-      });
-    };
-
-    this.#eventEditComponent.shake(resetFormState);
-  }
 }

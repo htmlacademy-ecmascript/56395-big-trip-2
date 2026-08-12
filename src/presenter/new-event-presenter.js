@@ -1,6 +1,7 @@
 import { render, remove, RenderPosition } from '../framework/render.js';
 import EventEditView from '../view/event-edit-view.js';
 import { UserAction, UpdateType } from '../const.js';
+import { isEscapeKey } from '../utils/common.js';
 
 export default class NewEventPresenter {
   #eventListContainer = null;
@@ -30,7 +31,7 @@ export default class NewEventPresenter {
     );
 
     render(this.#eventEditComponent, this.#eventListContainer, RenderPosition.AFTERBEGIN);
-    document.addEventListener('keydown', this.#escKeyDownHandler);
+    document.addEventListener('keydown', this.#documentKeydownHandler);
   }
 
   destroy() {
@@ -42,27 +43,8 @@ export default class NewEventPresenter {
     remove(this.#eventEditComponent);
     this.#eventEditComponent = null;
 
-    document.removeEventListener('keydown', this.#escKeyDownHandler);
+    document.removeEventListener('keydown', this.#documentKeydownHandler);
   }
-
-  #handleFormSubmit = (newEvent) => {
-    this.#handleDataChange(
-      UserAction.ADD_EVENT,
-      UpdateType.MINOR,
-      newEvent
-    );
-  };
-
-  #handleDeleteClick = () => {
-    this.destroy();
-  };
-
-  #escKeyDownHandler = (evt) => {
-    if (evt.key === 'Escape' || evt.key === 'Esc') {
-      evt.preventDefault();
-      this.destroy();
-    }
-  };
 
   setSaving() {
     if (this.#eventEditComponent === null) {
@@ -79,14 +61,31 @@ export default class NewEventPresenter {
       return;
     }
 
-    const resetFormState = () => {
+    this.#eventEditComponent.shake(() => {
       this.#eventEditComponent.updateElement({
         isDisabled: false,
         isSaving: false,
         isDeleting: false,
       });
-    };
-
-    this.#eventEditComponent.shake(resetFormState);
+    });
   }
+
+  #handleFormSubmit = (newEvent) => {
+    this.#handleDataChange(
+      UserAction.ADD_EVENT,
+      UpdateType.MINOR,
+      newEvent
+    );
+  };
+
+  #handleDeleteClick = () => {
+    this.destroy();
+  };
+
+  #documentKeydownHandler = (evt) => {
+    if (isEscapeKey(evt)) {
+      evt.preventDefault();
+      this.destroy();
+    }
+  };
 }

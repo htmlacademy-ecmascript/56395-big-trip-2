@@ -5,29 +5,47 @@ import BoardPresenter from './presenter/board-presenter.js';
 import FilterPresenter from './presenter/filter-presenter.js';
 import EventsApiService from './events-api-service.js';
 import TripInfoView from './view/trip-info-view.js';
+import NewEventButtonView from './view/new-event-button-view.js';
 import { sortEventDay } from './utils/sort.js';
 
-const AUTHORIZATION = 'Basic dsfa6656aswqey8asq4dr';
+const STORE_KEY = 'big-trip-auth-token';
 const END_POINT = 'https://22.objects.htmlacademy.pro/big-trip';
+
+let authorizationToken = localStorage.getItem(STORE_KEY);
 
 const siteHeaderElement = document.querySelector('.trip-main');
 const filtersContainer = siteHeaderElement.querySelector('.trip-controls__filters');
 const siteMainElement = document.querySelector('.trip-events');
-const newEventButtonElement = siteHeaderElement.querySelector('.trip-main__event-add-btn');
-
-const filterModel = new FilterModel();
-
-const eventsApiService = new EventsApiService(END_POINT, AUTHORIZATION);
-
-const eventModel = new EventModel({
-  eventsApiService
-});
 
 let tripInfoComponent = null;
+let newEventButtonComponent = null;
+
+if (!authorizationToken) {
+  authorizationToken = `Basic ${Math.random().toString(36).substring(2, 15)}`;
+  localStorage.setItem(STORE_KEY, authorizationToken);
+}
+
+const AUTHORIZATION = authorizationToken;
+
+const filterModel = new FilterModel();
+const eventsApiService = new EventsApiService(END_POINT, AUTHORIZATION);
+const eventModel = new EventModel({ eventsApiService });
+
+const filterPresenter = new FilterPresenter({
+  filterContainer: filtersContainer,
+  filterModel,
+  eventModel
+});
+
+const boardPresenter = new BoardPresenter({
+  boardContainer: siteMainElement,
+  eventModel,
+  filterModel,
+  onNewEventDestroy: handleNewEventFormClose
+});
 
 const renderTripInfo = () => {
   const prevTripInfoComponent = tripInfoComponent;
-
   const sortedEvents = [...eventModel.events].sort(sortEventDay);
 
   if (sortedEvents.length === 0) {
@@ -49,33 +67,34 @@ const renderTripInfo = () => {
   remove(prevTripInfoComponent);
 };
 
+function handleNewEventFormClose() {
+  newEventButtonComponent.setDisabled(false);
+}
+
+function handleNewEventButtonClick() {
+  newEventButtonComponent.setDisabled(true);
+  boardPresenter.createEvent();
+}
+
+newEventButtonComponent = new NewEventButtonView({
+  onClick: handleNewEventButtonClick
+});
+
+newEventButtonComponent.setDisabled(true);
+
+render(newEventButtonComponent, siteHeaderElement);
+
 eventModel.addObserver(() => {
   renderTripInfo();
 });
 
-const filterPresenter = new FilterPresenter({
-  filterContainer: filtersContainer,
-  filterModel,
-  eventModel
-});
-
-const boardPresenter = new BoardPresenter({
-  boardContainer: siteMainElement,
-  eventModel,
-  filterModel,
-  onNewEventDestroy: handleNewEventFormClose
-});
-
-function handleNewEventFormClose() {
-  newEventButtonElement.disabled = false;
-}
-
-newEventButtonElement.addEventListener('click', () => {
-  newEventButtonElement.disabled = true;
-  boardPresenter.createEvent();
-});
-
 filterPresenter.init();
 boardPresenter.init();
-eventModel.init();
 
+eventModel.init()
+  .then(() => {
+    newEventButtonComponent.setDisabled(false);
+  })
+  .catch(() => {
+    newEventButtonComponent.setDisabled(true);
+  });
